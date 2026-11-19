@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:fvm/fvm.dart';
 import 'package:fvm/src/services/logger_service.dart';
 import 'package:path/path.dart' as path;
@@ -23,8 +26,78 @@ class _SelectCaptureLogger extends Logger {
   }
 }
 
+/// Runs [prompt] with [input] lines on a terminal stdin and a plain stdout.
+T _answer<T>(String input, T Function(Logger logger) prompt) {
+  final logger = Logger(TestFactory.context(stdinHasTerminal: true));
+  final stdin = _LineStdin(const LineSplitter().convert(input));
+  final stdout = _PlainStdout();
+  return IOOverrides.runZoned(
+    () => prompt(logger),
+    stdin: () => stdin,
+    stdout: () => stdout,
+  );
+}
+
+class _LineStdin implements Stdin {
+  _LineStdin(this._lines);
+
+  final List<String> _lines;
+
+  @override
+  bool get hasTerminal => true;
+
+  @override
+  String? readLineSync({
+    Encoding encoding = systemEncoding,
+    bool retainNewlines = false,
+  }) {
+    if (_lines.isEmpty) return null;
+    final line = _lines.removeAt(0);
+    return retainNewlines ? '$line\n' : line;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _PlainStdout implements Stdout {
+  @override
+  bool get hasTerminal => false;
+
+  @override
+  void write(Object? object) {}
+
+  @override
+  void writeln([Object? object = '']) {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
   late Logger logger;
+
+  group('prompts', () {
+    test('confirm and select read the answer', () {
+      expect(
+          _answer('y\n', (l) => l.confirm('Go?', defaultValue: false)), isTrue);
+      expect(
+        _answer('2\n', (l) => l.select('Pick', options: ['a', 'b'])),
+        'b',
+      );
+    });
+
+    test('end of input answers no, or takes the default selection', () {
+      expect(_answer('', (l) => l.confirm('Go?', defaultValue: true)), isFalse);
+      expect(
+        _answer(
+          '',
+          (l) => l.select('Pick', options: ['a', 'b'], defaultSelection: 1),
+        ),
+        'b',
+      );
+    });
+  });
 
   setUp(() {
     logger = Logger(TestFactory.context());

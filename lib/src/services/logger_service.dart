@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dart_console/dart_console.dart';
-import 'package:interact/interact.dart' as interact;
+import 'package:dart_tui/dart_tui.dart' as tui;
 import 'package:mason_logger/mason_logger.dart' as mason;
 import 'package:stack_trace/stack_trace.dart';
 import 'package:tint/tint.dart';
@@ -121,10 +121,9 @@ class Logger extends ContextualService {
       return defaultValue;
     }
 
-    return interact.Confirm(
-      prompt: message ?? '',
-      defaultValue: defaultValue,
-    ).interact();
+    // Esc (cancel) or end of input answers no.
+    return tui.promptConfirmSync(message ?? '', defaultValue: defaultValue) ??
+        false;
   }
 
   String select(
@@ -132,20 +131,20 @@ class Logger extends ContextualService {
     required List<String> options,
     int? defaultSelection,
   }) {
-    if (_skipInput) {
-      if (defaultSelection != null) {
-        return options[defaultSelection];
-      }
-      exit(mason.ExitCode.usage.code);
+    if (!_skipInput) {
+      final selection = tui.promptSelectSync(
+        options,
+        title: message ?? '',
+        initial: defaultSelection ?? 0,
+      );
+      if (selection != null) return selection;
     }
 
-    final selection = interact.Select(
-      prompt: message ?? '',
-      options: options,
-      initialIndex: defaultSelection ?? 0,
-    ).interact();
-
-    return options[selection];
+    // Skipped input, Esc or end of input.
+    if (defaultSelection != null) {
+      return options[defaultSelection];
+    }
+    exit(mason.ExitCode.usage.code);
   }
 
   void notice(String message) {

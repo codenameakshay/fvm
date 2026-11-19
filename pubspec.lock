@@ -265,6 +265,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.1"
+  dart_tui:
+    dependency: "direct main"
+    description:
+      name: dart_tui
+      sha256: "6d1a9ec5714c1b604a9555ce6e856005c5d080b264fa91ee3fcea14d9fb17e76"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.0"
   date_format:
     dependency: "direct main"
     description:
@@ -377,14 +385,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.1.7"
-  interact:
-    dependency: "direct main"
-    description:
-      name: interact
-      sha256: b1abf79334bec42e58496a054cb7ee7ca74da6181f6a1fb6b134f1aa22bc4080
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.2.0"
   intl:
     dependency: transitive
     description:
